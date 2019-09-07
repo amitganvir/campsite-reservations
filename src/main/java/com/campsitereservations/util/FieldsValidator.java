@@ -1,8 +1,6 @@
-package com.campsitereservations;
+package com.campsitereservations.util;
 
-import com.campsitereservations.db.ReservationsDates;
 import com.campsitereservations.exceptions.InvalidInputException;
-import org.hibernate.validator.internal.xml.mapping.MappingXmlParser;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
