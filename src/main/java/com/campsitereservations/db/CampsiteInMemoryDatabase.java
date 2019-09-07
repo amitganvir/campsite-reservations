@@ -8,7 +8,8 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Component
@@ -17,7 +18,7 @@ public class CampsiteInMemoryDatabase {
 
     private HashMap<String, ReservationDetails> reservations;
     private HashSet<LocalDate> campsiteAvailabilityData;
-    private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private Lock lock = new ReentrantLock();
 
 
     @PostConstruct
@@ -41,20 +42,20 @@ public class CampsiteInMemoryDatabase {
 
     public List<LocalDate> getCampsiteAvailability(LocalDate startDate, LocalDate endDate) {
 
-        ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+        lock.lock();
         try {
             return campsiteAvailabilityData.stream().filter(date -> isEqualOrAfter(startDate, date) &&
                     isEqualOrBefore(endDate, date)).collect(Collectors.toList());
         } catch (Exception exception) {
             throw new RuntimeException("Exception while reading data for campsite");
         } finally {
-            readLock.unlock();
+            lock.unlock();
         }
     }
 
     public boolean addReservation(ReservationDetails reservationDetails) {
 
-        ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+        lock.lock();
 
         try {
 
@@ -64,16 +65,18 @@ public class CampsiteInMemoryDatabase {
             } else {
                 throw new RuntimeException("Campsite already booked for given dates. Please try other dates");
             }
+        } catch(RuntimeException runtimeException) {
+            throw runtimeException;
         } catch (Exception exception) {
             throw new RuntimeException("Exception while booking campsite");
         } finally {
-            writeLock.unlock();
+            lock.unlock();
         }
         return true;
     }
 
     public ReservationDetails findReservation(String reservationId) {
-        ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+        lock.lock();
         ReservationDetails reservationDetails = null;
 
         try {
@@ -81,14 +84,14 @@ public class CampsiteInMemoryDatabase {
         } catch (Exception exception) {
             System.out.println("Exception while finding reservation with reservation id : " + reservationId);
         } finally {
-            readLock.unlock();
+            lock.unlock();
         }
 
         return reservationDetails;
     }
 
     public boolean deleteReservation(String reservationId) {
-        ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+        lock.lock();
 
         try {
             if (!reservations.containsKey(reservationId)) {
@@ -100,13 +103,13 @@ public class CampsiteInMemoryDatabase {
         } catch (Exception exception) {
             throw new RuntimeException("Exception while adding reservation data");
         } finally {
-            writeLock.unlock();
+            lock.unlock();
         }
     }
 
     private boolean deleteCampsiteAvailabilityData(ReservationsDates reservationsDates) {
 
-        ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+        lock.lock();
         try {
             LocalDate startDate = reservationsDates.getStartDate();
             LocalDate endDate = reservationsDates.getEndDate().plusDays(1);
@@ -116,17 +119,16 @@ public class CampsiteInMemoryDatabase {
                 startDate = startDate.plusDays(1);
             }
         } catch (Exception exception) {
-            System.out.println("Exception while deleting campsite availability data");
-            return false;
+            throw new RuntimeException("Exception while deleting campsite availability data");
         } finally {
-            writeLock.unlock();
+            lock.unlock();
         }
         return true;
     }
 
     private boolean addCampsiteAvailabilityData(ReservationsDates reservationsDates) {
 
-        ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+        lock.lock();
         try {
             LocalDate startDate = reservationsDates.getStartDate();
             LocalDate endDate = reservationsDates.getEndDate().plusDays(1);
@@ -139,7 +141,7 @@ public class CampsiteInMemoryDatabase {
             System.out.println("Exception while adding reservation data");
             return false;
         } finally {
-            writeLock.unlock();
+            lock.unlock();
         }
         return true;
     }
@@ -147,7 +149,7 @@ public class CampsiteInMemoryDatabase {
     public boolean updateReservation(ReservationDetails oldReservationDetails,
                                       ReservationDetails newReservationDetails) {
 
-        ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+        lock.lock();
         try {
 
             if (datesAvailableForReservation(newReservationDetails.getReservationsDates())) {
@@ -159,26 +161,27 @@ public class CampsiteInMemoryDatabase {
             System.out.println("Exception while adding reservation data");
             return false;
         } finally {
-            writeLock.unlock();
+            lock.unlock();
         }
         return true;
     }
 
     private boolean isEqualOrAfter(LocalDate firstDate, LocalDate secondDate) {
-        return firstDate.isEqual(secondDate) || firstDate.isAfter(secondDate);
+        return secondDate.isEqual(firstDate) || secondDate.isAfter(firstDate);
     }
 
     private boolean isEqualOrBefore(LocalDate firstDate, LocalDate secondDate) {
-        return firstDate.isEqual(secondDate) || firstDate.isBefore(secondDate);
+        return secondDate.isEqual(firstDate) || secondDate.isBefore(firstDate);
     }
 
     private boolean datesAvailableForReservation(ReservationsDates reservationsDates) {
-        ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+
+        lock.lock();
         try {
             LocalDate currentDate = reservationsDates.getStartDate();
             LocalDate finalEndDate = reservationsDates.getEndDate().plusDays(1);
 
-            while (currentDate.isEqual(finalEndDate)) {
+            while (currentDate.isBefore(finalEndDate)) {
 
                 if (!campsiteAvailabilityData.contains(currentDate)) {
                     return false;
@@ -190,7 +193,7 @@ public class CampsiteInMemoryDatabase {
         } catch (Exception exception) {
             throw new RuntimeException("Exception while reading data for campsite");
         } finally {
-            readLock.unlock();
+            lock.unlock();
         }
 
         return true;

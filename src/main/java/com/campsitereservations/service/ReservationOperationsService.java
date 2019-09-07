@@ -6,6 +6,7 @@ import com.campsitereservations.contracts.ReservationAddUpdateResponse;
 import com.campsitereservations.db.CampsiteInMemoryDatabase;
 import com.campsitereservations.db.ReservationDetails;
 import com.campsitereservations.db.ReservationsDates;
+import com.campsitereservations.exceptions.InvalidInputException;
 import com.campsitereservations.mapper.ReservationsMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,9 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+
+import static com.campsitereservations.FieldsValidator.validInputFields;
+import static com.campsitereservations.FieldsValidator.validString;
 
 @Service
 public class ReservationOperationsService {
@@ -33,50 +37,51 @@ public class ReservationOperationsService {
             ReservationsDates reservationsDates = validateAndAdjustDates(startDate, endDate);
             List<LocalDate> campsiteAvailability = campsiteInMemoryDatabase
                     .getCampsiteAvailability(reservationsDates.getStartDate(), reservationsDates.getEndDate());
-            return reservationsMapper.mapToAvailableReservationDatesResponse(startDate, endDate, campsiteAvailability);
+            return reservationsMapper.mapToAvailableReservationDatesResponse(reservationsDates.getStartDate().toString(),
+                    reservationsDates.getEndDate().toString(), campsiteAvailability);
 
         } catch (Exception exception) {
             return reservationsMapper.mapToAvailableReservationDatesFailedResponse(startDate, endDate, exception);
         }
     }
 
-    private ReservationsDates validateAndAdjustDates(String startDate, String endDate) {
+    private ReservationsDates validateAndAdjustDates(String startDate, String endDate) throws Exception{
+
 
         LocalDate startLocalDate = validString(startDate) ? LocalDate.parse(startDate) : LocalDate.now();
         LocalDate endLocalDate = validString(endDate) ? LocalDate.parse(endDate) : LocalDate.now().plusDays(32);
 
-        return ReservationsDates.builder().startDate(startLocalDate).endDate(endLocalDate).build();
-    }
+        String errorMessage = null;
 
-    private boolean validString(String date) {
-        return !StringUtils.isEmpty(date);
+        if (startLocalDate.isBefore(LocalDate.now())) {
+            errorMessage = "Checkin date should be a future date ";
+        } else if (startLocalDate.isAfter(endLocalDate)) {
+            errorMessage = "Checkin date should be before checkout date ";
+        } else if (endLocalDate.isBefore(LocalDate.now())) {
+            errorMessage = "Checkout date should be a future date ";
+        } else if (endLocalDate.isBefore(startLocalDate)) {
+            errorMessage = "Checkout date should be after checkin date ";
+        }
+
+        if (!StringUtils.isEmpty(errorMessage)) {
+            throw new InvalidInputException(errorMessage);
+        }
+
+        return ReservationsDates.builder().startDate(startLocalDate).endDate(endLocalDate).build();
     }
 
     public ReservationAddUpdateResponse addReservation(String firstName, String lastName, String email,
                                                        String startDate, String endDate) {
 
-        if (!(validString(startDate) || validString(endDate) ||
-                validString(firstName) || validString(lastName) || validString(email))) {
-
-            StringBuilder stringBuilder = new StringBuilder()
-                    .append("firstName=").append(firstName).append("\n")
-                    .append("lastName=").append(lastName).append("\n")
-                    .append("email=").append(email).append("\n")
-                    .append("startDate=").append(startDate).append("\n")
-                    .append("endDate=").append(endDate).append("\n");
-
-            return reservationsMapper.mapToAddReservationExceptionResponse(null,
-                    new RuntimeException("Invalid input : Empty field provided " + stringBuilder.toString()));
-        }
-
-        ReservationDetails reservationDetails = reservationsMapper
-                .mapToReservationDetails(firstName, lastName, email, startDate, endDate, getReservationUniqueId());
-
         try {
-            boolean success = campsiteInMemoryDatabase.addReservation(reservationDetails);
+
+            validInputFields(firstName, lastName, email, startDate, endDate);
+            ReservationDetails reservationDetails = reservationsMapper
+                    .mapToReservationDetails(firstName, lastName, email, startDate, endDate, getReservationUniqueId());
+            campsiteInMemoryDatabase.addReservation(reservationDetails);
             return reservationsMapper.mapToAddReservationResponse(reservationDetails);
         } catch (Exception exception) {
-            return reservationsMapper.mapToAddReservationExceptionResponse(reservationDetails, exception);
+            return reservationsMapper.mapToAddReservationExceptionResponse(exception);
         }
     }
 
@@ -98,21 +103,10 @@ public class ReservationOperationsService {
                                                           String firstName, String lastName, String email,
                                                           String startDate, String endDate) {
 
-        if (!validInputFields(firstName, lastName, email, startDate, endDate)) {
-
-            StringBuilder strBuilder = new StringBuilder();
-            strBuilder.append("firstName=").append(firstName).append("\n")
-                    .append("lastName=").append(lastName).append("\n")
-                    .append("email=").append(email).append("\n")
-                    .append("startDate=").append(startDate).append("\n")
-                    .append("endDate=").append(endDate).append("\n");
-
-            return reservationsMapper.mapToAddReservationExceptionResponse(null,
-                    new RuntimeException("Invalid input : Empty field provided " + strBuilder.toString()));
-        }
-
         ReservationDetails newReservation = null;
         try {
+            validInputFields(firstName, lastName, email, startDate, endDate);
+
             ReservationDetails oldReservation = campsiteInMemoryDatabase.findReservation(reservationId);
             newReservation = reservationsMapper.mapToReservationDetails(firstName, lastName, email,
                     startDate, endDate, oldReservation.getReservationId());
@@ -124,12 +118,5 @@ public class ReservationOperationsService {
         } catch (Exception exception) {
             return reservationsMapper.mapToUpdateExceptionResponse(newReservation, exception);
         }
-    }
-
-    private boolean validInputFields(String firstName, String lastName, String email,
-                                     String startDate, String endDate) {
-
-        return validString(startDate) && validString(endDate) && validString(firstName) && validString(lastName) &&
-                validString(email);
     }
 }

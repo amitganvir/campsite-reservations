@@ -4,12 +4,11 @@ import com.campsitereservations.contracts.*;
 import com.campsitereservations.db.CustomerData;
 import com.campsitereservations.db.ReservationDetails;
 import com.campsitereservations.db.ReservationsDates;
-import javafx.util.converter.LocalDateStringConverter;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -44,8 +43,7 @@ public class ReservationsMapper {
                 .build();
     }
 
-    public ReservationAddUpdateResponse mapToAddReservationExceptionResponse(ReservationDetails reservationDetails,
-                                                                             Exception exception) {
+    public ReservationAddUpdateResponse mapToAddReservationExceptionResponse(Exception exception) {
 
         return ReservationAddUpdateResponse
                 .builder()
@@ -87,19 +85,6 @@ public class ReservationsMapper {
                 .build() : null;
     }
 
-    public ReservationAddUpdateResponse mapToFailedResponseForAddEdit(ReservationDetails reservationDetails,
-                                                                      Exception exception) {
-        return ReservationAddUpdateResponse
-                .builder()
-                .message("Booking unsuccessful")
-                .reservationModel(mapToReservationModel(reservationDetails))
-                .errorDetails(ErrorDetails
-                        .builder()
-                        .errorMessage(exception.getMessage())
-                        .build())
-                .build();
-    }
-
     public DeleteReservationResponse mapToDeleteReservationResponse(String reservationId) {
         return DeleteReservationResponse
                 .builder()
@@ -120,6 +105,7 @@ public class ReservationsMapper {
                                                                                     List<LocalDate> dates) {
 
         List<String> availableDates = dates.stream().map(LocalDate::toString).collect(Collectors.toList());
+        availableDates.sort(Comparator.naturalOrder());
         return AvailableReservationDatesResponse
                 .builder()
                 .message("Available dates for booking between " + startDate + " - " + endDate)
