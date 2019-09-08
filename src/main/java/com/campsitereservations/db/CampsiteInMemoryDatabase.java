@@ -77,12 +77,12 @@ public class CampsiteInMemoryDatabase {
 
     public ReservationDetails findReservation(String reservationId) {
         lock.lock();
-        ReservationDetails reservationDetails = null;
+        ReservationDetails reservationDetails;
 
         try {
             reservationDetails = reservations.get(reservationId);
         } catch (Exception exception) {
-            System.out.println("Exception while finding reservation with reservation id : " + reservationId);
+            throw new RuntimeException("Exception while finding reservation with reservation id : " + reservationId);
         } finally {
             lock.unlock();
         }
@@ -101,7 +101,7 @@ public class CampsiteInMemoryDatabase {
             ReservationDetails reservationDetails = reservations.remove(reservationId);
             return reservationDetails != null && deleteCampsiteAvailabilityData(reservationDetails.getReservationsDates());
         } catch (Exception exception) {
-            throw new RuntimeException("Exception while adding reservation data");
+            throw new RuntimeException(exception.getMessage());
         } finally {
             lock.unlock();
         }
@@ -119,6 +119,7 @@ public class CampsiteInMemoryDatabase {
                 startDate = startDate.plusDays(1);
             }
         } catch (Exception exception) {
+            System.out.println("Exception while deleting campsite availability data");
             throw new RuntimeException("Exception while deleting campsite availability data");
         } finally {
             lock.unlock();

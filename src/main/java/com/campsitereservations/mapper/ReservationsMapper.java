@@ -18,7 +18,7 @@ public class ReservationsMapper {
 
         return ReservationAddUpdateResponse
                 .builder()
-                .message("Campsite booked successfully")
+                .message("Campsite booked successfully. Reservation Id : " + reservationDetails.getReservationId())
                 .reservationModel(mapToReservationModel(reservationDetails))
                 .build();
     }
