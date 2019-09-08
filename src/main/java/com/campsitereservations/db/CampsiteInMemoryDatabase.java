@@ -12,6 +12,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static com.campsitereservations.util.DateUtil.isEqualOrAfter;
+import static com.campsitereservations.util.DateUtil.isEqualOrBefore;
+
 @Component
 @Scope("singleton")
 public class CampsiteInMemoryDatabase {
@@ -81,8 +84,12 @@ public class CampsiteInMemoryDatabase {
 
         try {
             reservationDetails = reservations.get(reservationId);
+            if (reservationDetails == null) {
+                throw new RuntimeException("Unable to find reservation with id : " + reservationId);
+            }
+
         } catch (Exception exception) {
-            throw new RuntimeException("Exception while finding reservation with reservation id : " + reservationId);
+            throw new RuntimeException(exception.getMessage());
         } finally {
             lock.unlock();
         }
@@ -111,8 +118,8 @@ public class CampsiteInMemoryDatabase {
 
         lock.lock();
         try {
-            LocalDate startDate = reservationsDates.getStartDate();
-            LocalDate endDate = reservationsDates.getEndDate().plusDays(1);
+            LocalDate startDate = reservationsDates.getCheckinDate();
+            LocalDate endDate = reservationsDates.getCheckoutDate().plusDays(1);
 
             while (startDate.isBefore(endDate)) {
                 campsiteAvailabilityData.remove(startDate);
@@ -131,8 +138,8 @@ public class CampsiteInMemoryDatabase {
 
         lock.lock();
         try {
-            LocalDate startDate = reservationsDates.getStartDate();
-            LocalDate endDate = reservationsDates.getEndDate().plusDays(1);
+            LocalDate startDate = reservationsDates.getCheckinDate();
+            LocalDate endDate = reservationsDates.getCheckoutDate().plusDays(1);
 
             while (startDate.isBefore(endDate)) {
                 campsiteAvailabilityData.add(startDate);
@@ -153,34 +160,25 @@ public class CampsiteInMemoryDatabase {
         lock.lock();
         try {
 
-            if (datesAvailableForReservation(newReservationDetails.getReservationsDates())) {
                 reservations.put(newReservationDetails.getReservationId(), newReservationDetails);
-                deleteCampsiteAvailabilityData(oldReservationDetails.getReservationsDates());
-                addCampsiteAvailabilityData(newReservationDetails.getReservationsDates());
-            }
+                addCampsiteAvailabilityData(oldReservationDetails.getReservationsDates());
+                deleteCampsiteAvailabilityData(newReservationDetails.getReservationsDates());
         } catch (Exception exception) {
-            System.out.println("Exception while adding reservation data");
-            return false;
+            throw new RuntimeException(exception.getMessage());
         } finally {
             lock.unlock();
         }
         return true;
     }
 
-    private boolean isEqualOrAfter(LocalDate firstDate, LocalDate secondDate) {
-        return secondDate.isEqual(firstDate) || secondDate.isAfter(firstDate);
-    }
 
-    private boolean isEqualOrBefore(LocalDate firstDate, LocalDate secondDate) {
-        return secondDate.isEqual(firstDate) || secondDate.isBefore(firstDate);
-    }
 
     private boolean datesAvailableForReservation(ReservationsDates reservationsDates) {
 
         lock.lock();
         try {
-            LocalDate currentDate = reservationsDates.getStartDate();
-            LocalDate finalEndDate = reservationsDates.getEndDate().plusDays(1);
+            LocalDate currentDate = reservationsDates.getCheckinDate();
+            LocalDate finalEndDate = reservationsDates.getCheckoutDate().plusDays(1);
 
             while (currentDate.isBefore(finalEndDate)) {
 

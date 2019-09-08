@@ -13,9 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import static com.campsitereservations.util.DateUtil.isEqualOrAfter;
+import static com.campsitereservations.util.DateUtil.isEqualOrBefore;
 import static com.campsitereservations.validation.FieldsValidator.validInputFields;
 import static com.campsitereservations.validation.FieldsValidator.validString;
 
@@ -36,9 +41,9 @@ public class ReservationOperationsService {
         try {
             ReservationsDates reservationsDates = validateAndAdjustDates(startDate, endDate);
             List<LocalDate> campsiteAvailability = campsiteInMemoryDatabase
-                    .getCampsiteAvailability(reservationsDates.getStartDate(), reservationsDates.getEndDate());
-            return reservationsMapper.mapToAvailableReservationDatesResponse(reservationsDates.getStartDate().toString(),
-                    reservationsDates.getEndDate().toString(), campsiteAvailability);
+                    .getCampsiteAvailability(reservationsDates.getCheckinDate(), reservationsDates.getCheckoutDate());
+            return reservationsMapper.mapToAvailableReservationDatesResponse(reservationsDates.getCheckinDate().toString(),
+                    reservationsDates.getCheckoutDate().toString(), campsiteAvailability);
 
         } catch (Exception exception) {
             return reservationsMapper.mapToAvailableReservationDatesFailedResponse(startDate, endDate, exception);
@@ -67,7 +72,7 @@ public class ReservationOperationsService {
             throw new InvalidInputException(errorMessage);
         }
 
-        return ReservationsDates.builder().startDate(startLocalDate).endDate(endLocalDate).build();
+        return ReservationsDates.builder().checkinDate(startLocalDate).checkoutDate(endLocalDate).build();
     }
 
     public ReservationAddUpdateResponse addReservation(String firstName, String lastName, String email,
@@ -111,6 +116,7 @@ public class ReservationOperationsService {
             newReservation = reservationsMapper.mapToReservationDetails(firstName, lastName, email,
                     startDate, endDate, oldReservation.getReservationId());
 
+            validateReservationUpdate(oldReservation.getReservationsDates(), newReservation.getReservationsDates());
             campsiteInMemoryDatabase.updateReservation(oldReservation, newReservation);
 
             return reservationsMapper.mapToUpdateReservationResponse(newReservation);
@@ -119,4 +125,30 @@ public class ReservationOperationsService {
             return reservationsMapper.mapToUpdateExceptionResponse(newReservation, exception);
         }
     }
+
+    private void validateReservationUpdate(ReservationsDates oldReservationDates,
+                                           ReservationsDates newReservationDates) {
+
+        List<LocalDate> campsiteAvailability = campsiteInMemoryDatabase
+                .getCampsiteAvailability(newReservationDates.getCheckinDate(), newReservationDates.getCheckoutDate());
+
+        Set<LocalDate> availableDates = new HashSet<>(campsiteAvailability);
+
+        LocalDate newCheckInDate = newReservationDates.getCheckinDate();
+        LocalDate newCheckoutDate = newReservationDates.getCheckoutDate();
+
+        while (newCheckInDate.isBefore(newCheckoutDate.plusDays(1))) {
+
+            if (!availableDates.contains(newCheckInDate) &&
+                    (isEqualOrAfter(newCheckInDate, oldReservationDates.getCheckinDate()) &&
+                            isEqualOrBefore(newCheckInDate, oldReservationDates.getCheckoutDate()))) {
+
+                throw new RuntimeException("Campsite is not available for new checkin and checkout dates");
+            }
+
+            newCheckInDate = newCheckInDate.plusDays(1);
+        }
+    }
+
+
 }

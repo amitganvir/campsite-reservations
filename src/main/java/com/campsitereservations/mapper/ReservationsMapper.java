@@ -36,8 +36,8 @@ public class ReservationsMapper {
                 .reservationsDates(
                         ReservationsDates
                                 .builder()
-                                .startDate(LocalDate.parse(startDate))
-                                .endDate(LocalDate.parse(endDate))
+                                .checkinDate(LocalDate.parse(startDate))
+                                .checkoutDate(LocalDate.parse(endDate))
                                 .build())
                 .reservationId(reservationId)
                 .build();
@@ -77,8 +77,8 @@ public class ReservationsMapper {
         return reservationDetails != null ? ReservationModel
                 .builder()
                 .reservationId(reservationDetails.getReservationId())
-                .checkinDate(reservationDetails.getReservationsDates().getStartDate().toString())
-                .checkoutDate(reservationDetails.getReservationsDates().getEndDate().toString())
+                .checkinDate(reservationDetails.getReservationsDates().getCheckinDate().toString())
+                .checkoutDate(reservationDetails.getReservationsDates().getCheckoutDate().toString())
                 .firstName(reservationDetails.getCustomerData().getFirstName())
                 .lastName(reservationDetails.getCustomerData().getLastName())
                 .email(reservationDetails.getCustomerData().getEmail())

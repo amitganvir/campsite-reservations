@@ -5,6 +5,8 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FieldsValidator {
 
@@ -12,6 +14,16 @@ public class FieldsValidator {
     private static final int LATEST_BOOKING_DAY = 1;
     private static final int EARLIEST_BOOKING_DAY = 31;
     private static final String DATE_FORMAT = "yyyy-MM-dd";
+    private static final String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                    + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+
+
+    private static void validateEmail(String emailAddress) throws Exception {
+            Matcher matcher = Pattern.compile(EMAIL_PATTERN).matcher(emailAddress);
+             if (!matcher.matches()) {
+                 throw new InvalidInputException("Invalid email address : " + emailAddress);
+             }
+    }
 
     public static boolean validInputFields(String firstName, String lastName, String email,
                                            String startDate, String endDate) throws Exception {
@@ -19,12 +31,14 @@ public class FieldsValidator {
         if (validString(startDate) && validString(endDate) && validString(firstName) && validString(lastName) &&
                 validString(email)) {
 
+            validateEmail(email);
             validateCheckinCheckoutDates(startDate, endDate);
             return true;
         }
 
         StringBuilder strBuilder = new StringBuilder();
-        strBuilder.append("firstName=").append(firstName).append("\n")
+        strBuilder.append("Invalid input parameters : ")
+                .append("firstName=").append(firstName).append("\n")
                 .append("lastName=").append(lastName).append("\n")
                 .append("email=").append(email).append("\n")
                 .append("startDate=").append(startDate).append("\n")
@@ -50,7 +64,7 @@ public class FieldsValidator {
     }
 
     public static boolean validString(String inputString) {
-        return !StringUtils.isEmpty(inputString);
+        return !StringUtils.isEmpty(inputString.trim());
     }
 
     private static boolean validateReservationDates(LocalDate checkinDate, LocalDate checkoutDate) throws Exception {
