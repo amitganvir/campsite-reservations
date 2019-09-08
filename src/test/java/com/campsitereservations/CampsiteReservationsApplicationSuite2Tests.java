@@ -1,6 +1,7 @@
 package com.campsitereservations;
 
 import com.jayway.jsonpath.JsonPath;
+import lombok.extern.log4j.Log4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.logging.Logger;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class CampsiteReservationsApplicationTests {
+public class CampsiteReservationsApplicationSuite2Tests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -30,21 +33,23 @@ public class CampsiteReservationsApplicationTests {
     @Test
     public void shouldGetAllAvailableBookingDates() throws Exception {
 
-        String checkinDate = LocalDate.now().plusDays(10).toString();
-        String checkoutDate = LocalDate.now().plusDays(15).toString();
+        String checkinDate = LocalDate.now().minusDays(10).toString();
+        String checkoutDate = LocalDate.now().minusDays(5).toString();
 
         this.mockMvc.perform(get("/v1/api/available-dates?checkinDate="+checkinDate+"&checkoutDate="+ checkoutDate))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message",
-                        is("Available dates for booking between "+checkinDate + " - " + checkoutDate)))
-                .andExpect(jsonPath("availableDates.dates", hasSize(3)));
+                        is("Failed to get dates for booking between "+checkinDate + " - " + checkoutDate)))
+                .andExpect(jsonPath("availableDates", nullValue()));
     }
 
     @Test
     public void shouldAddEditDeleteReservationWithValidCheckinCheckoutDates() throws Exception {
 
-        LocalDate checkinDate = LocalDate.now().plusDays(20);
-        LocalDate checkoutDate = LocalDate.now().plusDays(22);
+        System.out.println("Execution start time of shouldAddEditDeleteReservationWithValidCheckinCheckoutDates " + new Date().getTime());
+
+        LocalDate checkinDate = LocalDate.now().plusDays(10);
+        LocalDate checkoutDate = LocalDate.now().plusDays(12);
 
         String inputParams = "firstName=Amit&lastName=Ganvir&email=aganvir@gmail.com&checkinDate=" +
                 checkinDate + "&checkoutDate=" + checkoutDate;

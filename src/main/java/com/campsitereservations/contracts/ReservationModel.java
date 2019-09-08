@@ -10,6 +10,6 @@ public class ReservationModel {
     private String firstName;
     private String lastName;
     private String email;
-    private String checkInDate;
+    private String checkinDate;
     private String checkoutDate;
 }

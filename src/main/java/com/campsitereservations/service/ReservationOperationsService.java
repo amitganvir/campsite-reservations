@@ -16,8 +16,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static com.campsitereservations.util.FieldsValidator.validInputFields;
-import static com.campsitereservations.util.FieldsValidator.validString;
+import static com.campsitereservations.validation.FieldsValidator.validInputFields;
+import static com.campsitereservations.validation.FieldsValidator.validString;
 
 @Service
 public class ReservationOperationsService {

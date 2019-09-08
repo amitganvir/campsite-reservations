@@ -4,13 +4,13 @@ import com.campsitereservations.contracts.AvailableReservationDatesResponse;
 import com.campsitereservations.contracts.DeleteReservationResponse;
 import com.campsitereservations.contracts.ReservationAddUpdateResponse;
 import com.campsitereservations.service.ReservationOperationsService;
-import jdk.nashorn.internal.objects.annotations.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController("/v1/api/")
+@RestController
+@RequestMapping("/v1/api/")
 public class ReservationsController {
 
     private ReservationOperationsService reservationOperationsService;
@@ -21,26 +21,29 @@ public class ReservationsController {
     }
 
     @GetMapping("available-dates")
-    public ResponseEntity<AvailableReservationDatesResponse> getAvailableDates(String startDate, String endDate) {
+    public ResponseEntity<AvailableReservationDatesResponse> getAvailableDates(@RequestParam("checkinDate") String checkinDate, @RequestParam("checkoutDate") String checkoutDate) {
 
         AvailableReservationDatesResponse availableReservationDatesResponse = reservationOperationsService
-                .getAvailableDates(startDate, endDate);
+                .getAvailableDates(checkinDate, checkoutDate);
 
         return new ResponseEntity<>(availableReservationDatesResponse, HttpStatus.OK);
     }
 
     @PostMapping("add-reservation")
-    public ResponseEntity<ReservationAddUpdateResponse> addReservation(String firstName, String lastName,
-                                         String email, String startDate, String endDate) {
+    public ResponseEntity<ReservationAddUpdateResponse> addReservation(@RequestParam("firstName") String firstName,
+                                                                       @RequestParam("lastName") String lastName,
+                                                                       @RequestParam("email") String email,
+                                                                       @RequestParam("checkinDate") String checkinDate,
+                                                                       @RequestParam("checkoutDate") String checkoutDate) {
 
         ReservationAddUpdateResponse reservationAddUpdateResponse = reservationOperationsService
-                .addReservation(firstName, lastName, email, startDate, endDate);
+                .addReservation(firstName, lastName, email, checkinDate, checkoutDate);
 
         return new ResponseEntity<>(reservationAddUpdateResponse, HttpStatus.OK);
     }
 
     @DeleteMapping("cancel-reservation")
-    public ResponseEntity<DeleteReservationResponse> cancelReservation(String reservationId) {
+    public ResponseEntity<DeleteReservationResponse> cancelReservation(@RequestParam("reservationId") String reservationId) {
 
         DeleteReservationResponse deleteReservationResponse = reservationOperationsService
                 .cancelReservation(reservationId);
@@ -48,15 +51,15 @@ public class ReservationsController {
         return new ResponseEntity<>(deleteReservationResponse, HttpStatus.OK);
     }
 
-    @PutMapping("update-resevation")
+    @PutMapping("update-reservation")
     public ResponseEntity<ReservationAddUpdateResponse> updateReservation(String reservationId, String firstName,
                                                                           String lastName, String email,
-                                                                          String startDate, String endDate) {
+                                                                          String checkinDate, String checkoutDate) {
 
         ReservationAddUpdateResponse reservationAddUpdateResponse = reservationOperationsService
                 .updateReservation(reservationId, firstName,
                         lastName, email,
-                        startDate, endDate);
+                        checkinDate, checkoutDate);
 
         return new ResponseEntity<>(reservationAddUpdateResponse, HttpStatus.OK);
     }

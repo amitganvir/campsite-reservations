@@ -77,7 +77,7 @@ public class ReservationsMapper {
         return reservationDetails != null ? ReservationModel
                 .builder()
                 .reservationId(reservationDetails.getReservationId())
-                .checkInDate(reservationDetails.getReservationsDates().getStartDate().toString())
+                .checkinDate(reservationDetails.getReservationsDates().getStartDate().toString())
                 .checkoutDate(reservationDetails.getReservationsDates().getEndDate().toString())
                 .firstName(reservationDetails.getCustomerData().getFirstName())
                 .lastName(reservationDetails.getCustomerData().getLastName())
@@ -104,8 +104,7 @@ public class ReservationsMapper {
                                                                                     String endDate,
                                                                                     List<LocalDate> dates) {
 
-        List<String> availableDates = dates.stream().map(LocalDate::toString).collect(Collectors.toList());
-        availableDates.sort(Comparator.naturalOrder());
+        List<String> availableDates = dates.stream().map(LocalDate::toString).sorted(Comparator.naturalOrder()).collect(Collectors.toList());
         return AvailableReservationDatesResponse
                 .builder()
                 .message("Available dates for booking between " + startDate + " - " + endDate)

@@ -1,4 +1,4 @@
-package com.campsitereservations.util;
+package com.campsitereservations.validation;
 
 import com.campsitereservations.exceptions.InvalidInputException;
 import org.springframework.util.StringUtils;
@@ -53,7 +53,7 @@ public class FieldsValidator {
         return !StringUtils.isEmpty(inputString);
     }
 
-    public static boolean validateReservationDates(LocalDate checkinDate, LocalDate checkoutDate) throws Exception {
+    private static boolean validateReservationDates(LocalDate checkinDate, LocalDate checkoutDate) throws Exception {
 
         validateCheckInAndCheckoutDateRange(checkinDate, checkoutDate);
         validateBookingDate(checkinDate);
