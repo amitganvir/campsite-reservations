@@ -14,10 +14,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -103,6 +100,7 @@ public class CampsiteReservationsConcurrencyTest {
                             This was because of ArrayIndexOutOfBound Exception in spring framework.
                             Added retry to cover it.
                          */
+                        System.out.println("Retrying request .....");
                         e.printStackTrace();
                         tryCount++;
                     }
