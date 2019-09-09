@@ -7,6 +7,6 @@ import lombok.Getter;
 @Builder
 public class ReservationDetails {
     private String reservationId;
-    private CustomerData customerData;
+    private Customer customer;
     private ReservationsDates reservationsDates;
 }
