@@ -73,8 +73,16 @@ public class CampsiteReservationsConcurrencyTest {
     @Test
     public void concurrentTests() throws Exception {
 
+        /*
+        Here the count variable is used to create unique user information like
+         - first name
+         - last name
+         - email address
+         */
         List<String> requestList = getCreateRequests(0);
         requestList.addAll(getCreateRequests(20));
+        requestList.addAll(getCreateRequests(40));
+        requestList.addAll(getCreateRequests(60));
 
         final ExecutorService executorService = Executors.newFixedThreadPool(40);
 
@@ -105,7 +113,7 @@ public class CampsiteReservationsConcurrencyTest {
         executorService.awaitTermination(10, TimeUnit.SECONDS);
 
         assertEquals(10, successfulBookings.size());
-        assertEquals(10, failureBookings.size());
+        assertEquals(30, failureBookings.size());
     }
 
 
