@@ -1,7 +1,7 @@
 package com.campsitereservations.mapper;
 
 import com.campsitereservations.contracts.*;
-import com.campsitereservations.db.CustomerData;
+import com.campsitereservations.db.Customer;
 import com.campsitereservations.db.ReservationDetails;
 import com.campsitereservations.db.ReservationsDates;
 import org.springframework.stereotype.Component;
@@ -29,7 +29,7 @@ public class ReservationsMapper {
 
         return ReservationDetails
                 .builder()
-                .customerData(CustomerData
+                .customer(Customer
                         .builder()
                         .firstName(firstName).lastName(lastName).email(email)
                         .build())
@@ -79,9 +79,9 @@ public class ReservationsMapper {
                 .reservationId(reservationDetails.getReservationId())
                 .checkinDate(reservationDetails.getReservationsDates().getCheckinDate().toString())
                 .checkoutDate(reservationDetails.getReservationsDates().getCheckoutDate().toString())
-                .firstName(reservationDetails.getCustomerData().getFirstName())
-                .lastName(reservationDetails.getCustomerData().getLastName())
-                .email(reservationDetails.getCustomerData().getEmail())
+                .firstName(reservationDetails.getCustomer().getFirstName())
+                .lastName(reservationDetails.getCustomer().getLastName())
+                .email(reservationDetails.getCustomer().getEmail())
                 .build() : null;
     }
 

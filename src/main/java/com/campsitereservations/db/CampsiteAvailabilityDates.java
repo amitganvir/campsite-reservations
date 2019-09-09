@@ -7,6 +7,6 @@ import java.time.LocalDate;
 
 @Getter
 @Builder
-public class CampsiteAvailabilityData {
+public class CampsiteAvailabilityDates {
     private LocalDate availableDate;
 }
