@@ -14,10 +14,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -73,8 +70,16 @@ public class CampsiteReservationsConcurrencyTest {
     @Test
     public void concurrentTests() throws Exception {
 
+        /*
+        Here the count variable is used to create unique user information like
+         - first name
+         - last name
+         - email address
+         */
         List<String> requestList = getCreateRequests(0);
         requestList.addAll(getCreateRequests(20));
+        requestList.addAll(getCreateRequests(40));
+        requestList.addAll(getCreateRequests(60));
 
         final ExecutorService executorService = Executors.newFixedThreadPool(40);
 
@@ -95,6 +100,7 @@ public class CampsiteReservationsConcurrencyTest {
                             This was because of ArrayIndexOutOfBound Exception in spring framework.
                             Added retry to cover it.
                          */
+                        System.out.println("Retrying request .....");
                         e.printStackTrace();
                         tryCount++;
                     }
@@ -105,7 +111,7 @@ public class CampsiteReservationsConcurrencyTest {
         executorService.awaitTermination(10, TimeUnit.SECONDS);
 
         assertEquals(10, successfulBookings.size());
-        assertEquals(10, failureBookings.size());
+        assertEquals(30, failureBookings.size());
     }
 
 
