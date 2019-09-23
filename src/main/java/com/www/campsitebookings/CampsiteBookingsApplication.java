@@ -19,10 +19,14 @@ public class CampsiteBookingsApplication {
     }
 
 
+    /**
+     * Initializes Campsite with dates - Today to next 31 days.
+     *
+     * @param campsiteRepository
+     * @return CommandLineRunner
+     */
     @Bean
     CommandLineRunner commandLineRunner(CampsiteRepository campsiteRepository) {
-
-
         return args -> {
 
             LocalDate currentDate = LocalDate.now();
@@ -34,9 +38,7 @@ public class CampsiteBookingsApplication {
                 dates.add(CampsiteAvailability.builder().date(currentDate).build());
                 currentDate = currentDate.plusDays(1);
             }
-
             campsiteRepository.saveAll(dates);
-
         };
     }
 

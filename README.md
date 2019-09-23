@@ -8,6 +8,19 @@ This is a Campsite reservation service that allows users to book campsite for fo
 <h4> Implementation Overview </h4>
    
     Application is developed using Spring Boot Framework with H2 in-memory database.
+    
+    H2 Database Tables:
+        1. Reservation
+            - Reservations are stored in this table.
+            - Fields : Name, Email, ReservationId, List<CampsiteAvailability> (References CampsiteAvailability)
+        2. CampsiteAvailability
+            - CampsiteAvailablility has dates which represent campsite booking dates
+            - Fields : Date, Reservation (references Reservation table)
+            - A Date with valid Resrevation entry means Campsite is booked.
+            
+            NOTE: CampsiteAvailability is pre-populated with dates for next 31 days. 
+                  This is done when the application is started and is taken care in CampsiteBookingsApplication.java
+    
     Implemtation is divided into following layers:
         Controller:
             Entry point for all the rest api requests
@@ -36,6 +49,7 @@ This is a Campsite reservation service that allows users to book campsite for fo
         
      Application Start Command:
         ./mvnw -e spring-boot::run
+        
             
         
         
