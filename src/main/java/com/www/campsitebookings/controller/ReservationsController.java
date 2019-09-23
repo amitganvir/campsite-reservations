@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import static com.www.campsitebookings.util.SystemEvent.ADD_RESERVATION_EXCEPTION;
 
+/**
+ * Rest Controller with methods to add, update, cancel and get campsites
+ */
 @RestController
 @RequestMapping("/v1/api/")
 public class ReservationsController {

@@ -10,7 +10,13 @@ import java.util.regex.Pattern;
 
 import static com.www.campsitebookings.util.SystemEvent.*;
 
-
+/**
+ * Utility class for request validations.
+ * Validates rules conforming to
+ *      - Input parameters like name, email, checkinDate and checkoutDate
+ *      - Checkin & Checkout date ranges
+ *
+ */
 public class RequestValidation {
 
     private static final int MAX_BOOKING_DAYS = 3;

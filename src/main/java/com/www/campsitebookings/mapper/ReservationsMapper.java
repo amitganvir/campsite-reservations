@@ -4,17 +4,20 @@ import com.www.campsitebookings.contracts.CampsiteAvailabilityModel;
 import com.www.campsitebookings.contracts.CancelReservationModel;
 import com.www.campsitebookings.contracts.ErrorModel;
 import com.www.campsitebookings.contracts.ReservationConfirmationModel;
-import com.www.campsitebookings.db.CampsiteAvailability;
 import com.www.campsitebookings.db.Reservation;
 import com.www.campsitebookings.util.SystemEvent;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Mapper class that maps input requests to Reservation request.
+ * Maps Database results to reservation status models.
+ *
+ */
 @Component
 public class ReservationsMapper {
 
@@ -24,19 +27,6 @@ public class ReservationsMapper {
                 .availableDates(availableDates.stream().map(LocalDate::toString)
                         .collect(Collectors.toList()))
                 .build();
-    }
-
-    public List<CampsiteAvailability> mapToCampsiteAvailabilities(LocalDate checkinDate, LocalDate checkoutDate, Reservation reservation) {
-
-        LocalDate localCheckinDate = checkinDate;
-        List<CampsiteAvailability> availabilities = new ArrayList<>();
-
-        while (localCheckinDate.isBefore(checkoutDate.plusDays(1))) {
-            availabilities.add(CampsiteAvailability.builder().reservation(reservation).date(localCheckinDate).build());
-            localCheckinDate = localCheckinDate.plusDays(1);
-        }
-
-        return availabilities;
     }
 
     public ReservationConfirmationModel mapToReservationConfirmationModel(Reservation reservation,
@@ -72,7 +62,7 @@ public class ReservationsMapper {
                 .build();
     }
 
-    public Reservation mapToReservation(String name, String email, List<LocalDate> campsiteAvailabilities) {
+    public Reservation mapToReservation(String name, String email) {
 
         String reservationId = UUID.randomUUID().toString();
 

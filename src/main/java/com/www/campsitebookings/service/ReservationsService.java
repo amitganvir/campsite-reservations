@@ -26,7 +26,14 @@ import java.util.stream.Collectors;
 
 import static com.www.campsitebookings.util.SystemEvent.*;
 
-
+/**
+ * Service layer to handle Campsite booking operations.
+ *
+ * Utilizes @Transactional for rolling-back transactions in scenarios where multiple threads
+ * update the same record/rows.
+ * This is useful in achieving correct behavior when multiple users try and booking campsite concurrently.
+ *
+ */
 @Service
 @Transactional
 public class ReservationsService {
@@ -46,6 +53,14 @@ public class ReservationsService {
         this.reservationsMapper = reservationsMapper;
     }
 
+    /**
+     * Get all available campsites for the given checkin and checkout dates.
+     *
+     * @param checkinDate
+     * @param checkoutDate
+     * @return
+     * @throws InvalidInputException
+     */
     @Transactional(readOnly = true)
     public CampsiteAvailabilityModel getAvailableDates(String checkinDate, String checkoutDate) throws InvalidInputException{
 
@@ -63,9 +78,24 @@ public class ReservationsService {
         }
     }
 
+    /**
+     * Adds reservation after checking availability of campsite and returns ReservationConfirmationModel with
+     * reservationId
+     *
+     * If campsite is not available, returns ReservationConfirmationModel with ErrorModel having
+     * correct error details.
+     *
+     * @param name
+     * @param email
+     * @param checkinDate
+     * @param checkoutDate
+     * @return
+     * @throws InvalidInputException
+     */
     @Transactional
-    public ReservationConfirmationModel addReservation(String name, String email, String checkinDate, String checkoutDate) throws InvalidInputException {
-
+    public ReservationConfirmationModel addReservation(String name, String email,
+                                                       String checkinDate, String checkoutDate)
+            throws InvalidInputException {
 
         try {
 
@@ -80,8 +110,7 @@ public class ReservationsService {
             if (availableCampsites.size() != numberOfDays) {
                 throw new CampsiteNotAvailableException(CAMPSITE_UNAVAILABLE);
             }
-            Reservation reservation = reservationsMapper.mapToReservation(name, email, availableCampsites.stream()
-                    .map(CampsiteAvailability::getDate).collect(Collectors.toList()));
+            Reservation reservation = reservationsMapper.mapToReservation(name, email);
 
             availableCampsites.stream().forEach(campsiteAvailability -> campsiteAvailability.setReservation(reservation));
 
@@ -95,6 +124,15 @@ public class ReservationsService {
         }
     }
 
+    /**
+     * Cancels reservation for given reservation id and returns successful response.
+     * Returns CancelReservationModel with ErrorModel in case where reservation for given
+     * reservation id is not found.
+     *
+     * @param reservationId
+     * @return
+     * @throws InvalidInputException
+     */
     public CancelReservationModel cancelReservation(String reservationId) throws InvalidInputException{
 
         try {
@@ -144,6 +182,24 @@ public class ReservationsService {
 
     }
 
+    /**
+     *
+     * Updates reservation with new details as provided.
+     * Updates can be for following:
+     *      - Name Change
+     *      - Email Change
+     *      - Checkin or Checkout date changes
+     *
+     *  Handles cases where checkin checkout are overlapping with previous reservation dates.
+     *
+     * @param reservationId
+     * @param name
+     * @param email
+     * @param checkinDate
+     * @param checkoutDate
+     * @return
+     * @throws InvalidInputException
+     */
     public ReservationConfirmationModel updateReservation(String reservationId, String name, String email,
                                                           String checkinDate, String checkoutDate)
             throws InvalidInputException {
@@ -204,6 +260,15 @@ public class ReservationsService {
         }
     }
 
+    /**
+     * Find overlapping days between old and new reservation checkin-checkout dates.
+     *
+     * @param oldCheckinDate
+     * @param oldCheckoutDate
+     * @param newCheckinDate
+     * @param newCheckoutDate
+     * @return
+     */
     private Set<String> findNumberOfOverlappingDays(LocalDate oldCheckinDate, LocalDate oldCheckoutDate,
                                             LocalDate newCheckinDate, LocalDate newCheckoutDate) {
 
