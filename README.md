@@ -22,7 +22,7 @@ This is a Campsite reservation service that allows users to book campsite for fo
             
             
      Concurrency:
-        Achiteved concurrency requirements by using:
+        Achieved concurrency requirements by using:
             - Spring frameworks @Transactional
             - Optimistic Locking using @Version
             
